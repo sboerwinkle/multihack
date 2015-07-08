@@ -8,6 +8,7 @@
 
 #include "gui.h"
 #include "images.h"
+#include "entity.h"
 
 static SDL_Window* window;
 SDL_Renderer* render;
@@ -15,6 +16,8 @@ SDL_Renderer* render;
 static int running = 1;
 
 SDL_Texture **pictures = NULL;
+
+entity **entities;
 
 void drawSprite(int ix, int x, int y) {
 	static SDL_Rect r;
@@ -26,8 +29,7 @@ void drawSprite(int ix, int x, int y) {
 
 void clearScreen() {
 	SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
-	SDL_Rect r = {.x = 0, .y = 0, .w = width, .h = height};
-	SDL_RenderFillRect(render, &r);
+	SDL_RenderClear(render);
 	SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
 	int i;
 	for (i = 0; i < height; i += tileSize)
@@ -38,6 +40,12 @@ void clearScreen() {
 
 static void paint(){
 	clearScreen();
+	//Draw items
+	int i;
+	for (i = boardSize*boardSize - 1; i >= 0; i--) {
+		if (entities[i])
+			drawSprite(entities[i]->type, i%boardSize, i/boardSize);
+	}
 	SDL_RenderPresent(render);
 }
 
@@ -59,6 +67,11 @@ int main(int argc, char** argv){
 		return 1;
 	}
 	render = SDL_CreateRenderer(window, -1, 0);
+
+	entities = calloc(boardSize * boardSize, sizeof(entity*));
+
+	entities[boardSize*3 + 2] = malloc(sizeof(entity));
+	entities[boardSize*3 + 2]->type = 0;
 
 	loadPics();
 
@@ -86,6 +99,7 @@ int main(int argc, char** argv){
 		clock_gettime(CLOCK_MONOTONIC, &lastTime);
 	}
 
+	free(entities); //TODO: Actually free any remaining entities.
 	SDL_DestroyRenderer(render);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
